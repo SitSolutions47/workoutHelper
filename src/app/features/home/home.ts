@@ -1,74 +1,63 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { I18n } from '../../core/i18n/i18n';
 import { Icon } from '../../shared/icon/icon';
 import { PageHeader } from '../../shared/page-header/page-header';
+import {
+  DEFAULT_TIMER_SETTINGS,
+  TimerSettings,
+  sameTimerSettings,
+} from '../sound-timer/model/timer-settings';
+import { settingsTitle, summarizeSettings } from '../sound-timer/model/timer-summary';
+import { TimerPresets } from '../sound-timer/services/timer-presets';
 
 @Component({
   selector: 'app-home',
   imports: [RouterLink, Icon, PageHeader],
-  template: `
-    <app-page-header [heading]="t().app.name">
-      <a class="icon-button" routerLink="/settings" [attr.aria-label]="t().settings.heading">
-        <app-icon name="settings" />
-      </a>
-    </app-page-header>
-
-    <main class="page">
-      <h2 class="section-heading">{{ t().home.toolsHeading }}</h2>
-      <ul class="tools" role="list">
-        <li>
-          <a class="tool card" routerLink="/timer">
-            <span class="tool-icon"><app-icon name="timer" /></span>
-            <span class="tool-text">
-              <span class="tool-name">{{ t().home.timerName }}</span>
-              <span class="tool-description">{{ t().home.timerDescription }}</span>
-            </span>
-            <app-icon name="chevron-right" />
-          </a>
-        </li>
-      </ul>
-    </main>
-  `,
-  styles: `
-    .tools {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .tool {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      color: inherit;
-      text-decoration: none;
-    }
-    .tool-icon {
-      display: inline-flex;
-      padding: 0.75rem;
-      border-radius: 50%;
-      background: var(--color-accent);
-      color: var(--color-on-accent);
-    }
-    .tool-text {
-      display: flex;
-      flex: 1;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-    .tool-name {
-      font-size: 1.125rem;
-      font-weight: 700;
-    }
-    .tool-description {
-      color: var(--color-text-muted);
-      font-size: 0.9375rem;
-    }
-  `,
+  templateUrl: './home.html',
+  styleUrl: './home.scss',
 })
 export class Home {
+  private readonly presets = inject(TimerPresets);
+  private readonly router = inject(Router);
+
   protected readonly t = inject(I18n).t;
+
+  protected readonly favorites = computed(() =>
+    this.presets.favorites().map((favorite) => ({
+      id: favorite.id,
+      title: favorite.name,
+      summary: summarizeSettings(favorite.settings, this.t()),
+      settings: favorite.settings,
+    })),
+  );
+
+  /** Recently used configurations, without the ones already listed as a favorite. */
+  protected readonly recent = computed(() => {
+    const favorites = this.presets.favorites();
+    return this.presets
+      .history()
+      .filter((entry) => !favorites.some((f) => sameTimerSettings(f.settings, entry.settings)))
+      .map((entry) => ({
+        id: entry.id,
+        title: settingsTitle(entry.settings, this.t()),
+        summary: summarizeSettings(entry.settings, this.t()),
+        settings: entry.settings,
+      }));
+  });
+
+  protected readonly isEmpty = computed(
+    () => this.favorites().length === 0 && this.recent().length === 0,
+  );
+
+  /** Opens the setup screen with this configuration, so it can be reviewed before starting. */
+  protected open(settings: TimerSettings): void {
+    this.presets.load(settings);
+    void this.router.navigateByUrl('/timer');
+  }
+
+  protected createTimer(): void {
+    this.presets.load(DEFAULT_TIMER_SETTINGS);
+    void this.router.navigateByUrl('/timer');
+  }
 }

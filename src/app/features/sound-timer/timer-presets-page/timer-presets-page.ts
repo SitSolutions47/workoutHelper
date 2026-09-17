@@ -8,25 +8,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { formatClock } from '../../../core/format/format-clock';
-import { Translations } from '../../../core/i18n/de';
 import { I18n } from '../../../core/i18n/i18n';
 import { BackNavigation } from '../../../core/navigation/back-navigation';
 import { Icon } from '../../../shared/icon/icon';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { TimerSettings } from '../model/timer-settings';
+import { summarizeSettings } from '../model/timer-summary';
 import { Favorite, TimerPresets } from '../services/timer-presets';
-
-function summarize(settings: TimerSettings, t: Translations): string {
-  return t.presets.summary({
-    rounds: settings.rounds,
-    work: formatClock(settings.workSeconds),
-    rest: formatClock(settings.breakSeconds),
-    minGap: settings.minGapSeconds,
-    maxGap: settings.maxGapSeconds,
-    sounds: settings.soundIds.length,
-  });
-}
 
 @Component({
   selector: 'app-timer-presets-page',
@@ -45,7 +33,7 @@ export class TimerPresetsPage {
   protected readonly favorites = computed(() =>
     this.presets.favorites().map((favorite) => ({
       favorite,
-      summary: summarize(favorite.settings, this.t()),
+      summary: summarizeSettings(favorite.settings, this.t()),
     })),
   );
 
@@ -55,7 +43,7 @@ export class TimerPresetsPage {
   protected readonly history = computed(() =>
     this.presets.history().map((entry) => ({
       entry,
-      summary: summarize(entry.settings, this.t()),
+      summary: summarizeSettings(entry.settings, this.t()),
       usedAt: this.dateFormat().format(entry.usedAt),
     })),
   );
@@ -64,7 +52,8 @@ export class TimerPresetsPage {
   protected readonly removed = signal<{ favorite: Favorite; index: number } | undefined>(undefined);
 
   private readonly undoButton = viewChild<ElementRef<HTMLButtonElement>>('undoButton');
-  private readonly favoritesHeading = viewChild.required<ElementRef<HTMLElement>>('favoritesHeading');
+  private readonly favoritesHeading =
+    viewChild.required<ElementRef<HTMLElement>>('favoritesHeading');
 
   protected apply(settings: TimerSettings): void {
     this.presets.load(settings);

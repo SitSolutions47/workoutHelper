@@ -1,0 +1,56 @@
+<app-page-header [heading]="t().app.name">
+  <a class="icon-button" routerLink="/settings" [attr.aria-label]="t().settings.heading">
+    <app-icon name="settings" />
+  </a>
+</app-page-header>
+
+<main class="page">
+  @if (isEmpty()) {
+    <p class="hint">{{ t().home.empty }}</p>
+  }
+
+  @if (favorites().length > 0) {
+    <section aria-labelledby="favorites-heading">
+      <h2 id="favorites-heading" class="section-heading">{{ t().presets.favorites }}</h2>
+      <ul class="list" role="list">
+        @for (item of favorites(); track item.id) {
+          <li>
+            <button type="button" class="item card" (click)="open(item.settings)">
+              <span class="item-icon"><app-icon name="star" /></span>
+              <span class="item-text">
+                <span class="item-title">{{ item.title }}</span>
+                <span class="item-summary">{{ item.summary }}</span>
+              </span>
+              <app-icon name="chevron-right" />
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (recent().length > 0) {
+    <section aria-labelledby="recent-heading">
+      <h2 id="recent-heading" class="section-heading">{{ t().presets.history }}</h2>
+      <ul class="list" role="list">
+        @for (item of recent(); track item.id) {
+          <li>
+            <button type="button" class="item card" (click)="open(item.settings)">
+              <span class="item-icon item-icon--muted"><app-icon name="history" /></span>
+              <span class="item-text">
+                <span class="item-title">{{ item.title }}</span>
+                <span class="item-summary">{{ item.summary }}</span>
+              </span>
+              <app-icon name="chevron-right" />
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <button type="button" class="fab" (click)="createTimer()">
+    <app-icon name="add" />
+    {{ t().home.newTimer }}
+  </button>
+</main>

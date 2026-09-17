@@ -40,9 +40,8 @@ export const en: Translations = {
     run: 'Workout',
   },
   home: {
-    toolsHeading: 'Tools',
-    timerName: 'Callout Timer',
-    timerDescription: 'Round timer with random callouts – for pad work, heavy bag and reaction drills.',
+    newTimer: 'New timer',
+    empty: 'No timers yet. Create your first one with “New timer”.',
   },
   settings: {
     heading: 'Settings',

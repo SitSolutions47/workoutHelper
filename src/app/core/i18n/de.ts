@@ -48,10 +48,8 @@ export const de = {
     run: 'Training',
   },
   home: {
-    toolsHeading: 'Tools',
-    timerName: 'Kommando-Timer',
-    timerDescription:
-      'Rundentimer mit zufälligen Ansagen – für Pratzen-, Sandsack- und Reaktionstraining.',
+    newTimer: 'Neuer Timer',
+    empty: 'Noch keine Timer. Leg mit „Neuer Timer“ deinen ersten an.',
   },
   settings: {
     heading: 'Einstellungen',
