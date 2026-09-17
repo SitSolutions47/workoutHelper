@@ -8,7 +8,7 @@ export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 /** Keep in sync with the pre-paint script in `index.html`. */
 export const THEME_STORAGE_KEY = 'theme';
 
-/** Browser UI color per theme; matches `--color-bg` in `styles.scss`. */
+/** Browser UI color per theme; matches `--color-bg` in `styles.scss`. t*/
 const THEME_COLORS = { light: '#f4f3f1', dark: '#121212' } as const;
 
 function isThemePreference(value: unknown): value is ThemePreference {
