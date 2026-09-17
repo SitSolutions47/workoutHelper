@@ -1,0 +1,53 @@
+@for (group of groups; track group.category) {
+  @let groupName = t().sounds.categories[group.category];
+  <details class="group">
+    <summary class="summary">
+      <span class="summary-title">{{ groupName }}</span>
+      <span class="summary-count">
+        {{ t().sounds.selectedCount(selectedCounts().get(group.category) ?? 0, group.sounds.length) }}
+      </span>
+      <app-icon class="summary-chevron" name="expand-more" />
+    </summary>
+
+    <fieldset class="options">
+      <legend class="visually-hidden">{{ groupName }}</legend>
+      <div class="bulk-actions">
+        <button
+          type="button"
+          class="text-button"
+          [attr.aria-label]="t().sounds.selectAllLabel(groupName)"
+          (click)="selectAll(group)"
+        >
+          {{ t().sounds.selectAll }}
+        </button>
+        <button
+          type="button"
+          class="text-button"
+          [attr.aria-label]="t().sounds.selectNoneLabel(groupName)"
+          (click)="selectNone(group)"
+        >
+          {{ t().sounds.selectNone }}
+        </button>
+      </div>
+
+      <div class="chips" [class.chips--numbers]="group.category === 'numbers'">
+        @for (sound of group.sounds; track sound.id) {
+          <label class="chip">
+            <input
+              #checkbox
+              type="checkbox"
+              class="visually-hidden"
+              [checked]="selected().has(sound.id)"
+              (change)="toggle(sound.id, checkbox.checked)"
+            />
+            @if (sound.swatch) {
+              <span class="swatch" [style.background-color]="sound.swatch"></span>
+            }
+            <span>{{ sound.label[language()] }}</span>
+            <app-icon class="check" name="check" />
+          </label>
+        }
+      </div>
+    </fieldset>
+  </details>
+}

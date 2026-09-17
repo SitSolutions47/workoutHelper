@@ -1,0 +1,87 @@
+<app-page-header [heading]="t().timer.heading" backLink="/">
+  <a class="icon-button" routerLink="/timer/presets" [attr.aria-label]="t().timer.presetsLink">
+    <app-icon name="history" />
+  </a>
+</app-page-header>
+
+<main class="page">
+  <section class="card" aria-labelledby="setup-rounds-heading">
+    <h2 id="setup-rounds-heading" class="section-heading">{{ t().timer.roundsSection }}</h2>
+    <app-stepper
+      [formField]="settingsForm.rounds"
+      [label]="t().timer.rounds"
+      [step]="limits.rounds.step"
+      [valueText]="t().timer.roundsText"
+    />
+    <app-stepper
+      [formField]="settingsForm.workSeconds"
+      [label]="t().timer.work"
+      [step]="limits.workSeconds.step"
+      [format]="formatClock"
+      [valueText]="t().units.duration"
+    />
+    <app-stepper
+      [formField]="settingsForm.breakSeconds"
+      [label]="t().timer.rest"
+      [step]="limits.breakSeconds.step"
+      [format]="formatClock"
+      [valueText]="t().units.duration"
+    />
+    <app-stepper
+      [formField]="settingsForm.prepSeconds"
+      [label]="t().timer.prep"
+      [step]="limits.prepSeconds.step"
+      [format]="formatClock"
+      [valueText]="t().units.duration"
+    />
+  </section>
+
+  <section class="card" aria-labelledby="setup-callouts-heading">
+    <h2 id="setup-callouts-heading" class="section-heading">{{ t().timer.calloutsSection }}</h2>
+    <p class="hint">{{ t().timer.calloutsHint }}</p>
+    <app-stepper
+      [formField]="settingsForm.minGapSeconds"
+      [label]="t().timer.minGap"
+      [step]="limits.gapSeconds.step"
+      [format]="t().units.secondsShort"
+      [valueText]="t().units.seconds"
+    />
+    <app-stepper
+      [formField]="settingsForm.maxGapSeconds"
+      [label]="t().timer.maxGap"
+      [step]="limits.gapSeconds.step"
+      [format]="t().units.secondsShort"
+      [valueText]="t().units.seconds"
+    />
+  </section>
+
+  <section class="card" aria-labelledby="setup-sounds-heading">
+    <h2 id="setup-sounds-heading" class="section-heading">{{ t().timer.soundsSection }}</h2>
+    <app-sound-picker [formField]="settingsForm.soundIds" />
+    @if (settingsForm.soundIds().invalid()) {
+      <p class="error-text" role="alert">{{ t().timer.noSounds }}</p>
+    }
+  </section>
+
+  <div class="action-bar">
+    <p class="status" role="status">{{ statusMessage() }}</p>
+    <div class="action-bar-row">
+      <p class="total">{{ t().timer.total(totalDuration()) }}</p>
+      <button type="button" class="button button--secondary" (click)="openSaveDialog()">
+        <app-icon name="star-outline" />
+        {{ t().timer.saveFavorite }}
+      </button>
+      <button
+        type="button"
+        class="button button--primary"
+        [disabled]="settingsForm().invalid()"
+        (click)="start()"
+      >
+        <app-icon name="play" />
+        {{ t().timer.start }}
+      </button>
+    </div>
+  </div>
+</main>
+
+<app-save-favorite-dialog (saved)="saveFavorite($event)" />

@@ -1,0 +1,68 @@
+<app-page-header [heading]="t().presets.heading" backLink="/timer" />
+
+<main class="page">
+  <section aria-labelledby="favorites-heading">
+    <h2 #favoritesHeading id="favorites-heading" class="section-heading" tabindex="-1">
+      {{ t().presets.favorites }}
+    </h2>
+    @if (favorites().length > 0) {
+      <ul class="list" role="list">
+        @for (item of favorites(); track item.favorite.id) {
+          <li class="item card">
+            <button type="button" class="item-main" (click)="apply(item.favorite.settings)">
+              <span class="item-title">{{ item.favorite.name }}</span>
+              <span class="item-summary">{{ item.summary }}</span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              [attr.aria-label]="t().presets.delete(item.favorite.name)"
+              (click)="remove(item.favorite)"
+            >
+              <app-icon name="delete" />
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="hint empty">{{ t().presets.noFavorites }}</p>
+    }
+  </section>
+
+  <section aria-labelledby="history-heading">
+    <h2 id="history-heading" class="section-heading">{{ t().presets.history }}</h2>
+    @if (history().length > 0) {
+      <ul class="list" role="list">
+        @for (item of history(); track item.entry.id) {
+          <li class="item card">
+            <button type="button" class="item-main" (click)="apply(item.entry.settings)">
+              <span class="item-title">{{ item.usedAt }}</span>
+              <span class="item-summary">{{ item.summary }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="hint empty">{{ t().presets.noHistory }}</p>
+    }
+  </section>
+
+  <div class="toast-region" role="status">
+    @if (removed(); as current) {
+      <div class="toast">
+        <span class="toast-text">{{ t().presets.deleted(current.favorite.name) }}</span>
+        <button #undoButton type="button" class="text-button toast-action" (click)="undo()">
+          {{ t().common.undo }}
+        </button>
+        <button
+          type="button"
+          class="icon-button"
+          [attr.aria-label]="t().common.dismiss"
+          (click)="dismissUndo()"
+        >
+          <app-icon name="close" />
+        </button>
+      </div>
+    }
+  </div>
+</main>

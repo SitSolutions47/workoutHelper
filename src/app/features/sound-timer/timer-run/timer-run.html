@@ -1,0 +1,69 @@
+<main class="layout">
+  <header class="phase">
+    <h1 class="phase-title" tabindex="-1">{{ heading() }}</h1>
+    <p class="phase-detail">{{ detail() }}</p>
+  </header>
+  <p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
+  <div class="clock-area">
+    <div class="clock" role="timer">{{ clock() }}</div>
+    <div class="progress" aria-hidden="true">
+      <div class="progress-fill" [style.transform]="progressTransform()"></div>
+    </div>
+    <p class="total">{{ t().run.totalRemaining(totalRemaining()) }}</p>
+  </div>
+
+  <!-- Visual echo of the audio callout; hidden from screen readers, who already hear it. -->
+  <div class="callout" aria-hidden="true">
+    @if (callout(); as current) {
+      <!-- Tracking by time re-creates the element per callout, restarting its pop animation. -->
+      @for (item of [current]; track item.at) {
+        <span class="callout-label">
+          @if (item.swatch) {
+            <span class="callout-swatch" [style.background-color]="item.swatch"></span>
+          }
+          {{ item.label }}
+        </span>
+      }
+    }
+  </div>
+
+  <div class="controls">
+    @switch (status()) {
+      @case ('loading') {
+        <p class="loading">{{ t().run.loading }}</p>
+      }
+      @case ('finished') {
+        <button #againButton type="button" class="run-button run-button--primary" (click)="session.restart()">
+          <app-icon name="replay" />
+          {{ t().run.again }}
+        </button>
+        <button type="button" class="run-button" (click)="leave()">{{ t().run.adjust }}</button>
+      }
+      @default {
+        <button type="button" class="run-button run-button--primary" (click)="session.togglePause()">
+          @if (status() === 'paused') {
+            <app-icon name="play" />
+            {{ t().run.resume }}
+          } @else {
+            <app-icon name="pause" />
+            {{ t().run.pause }}
+          }
+        </button>
+        <div class="secondary-controls">
+          <button type="button" class="run-button" (click)="session.skipPhase()">
+            <app-icon name="skip-next" />
+            {{ t().run.skip }}
+          </button>
+          <!-- Only offered while paused, so a stray tap can't end a round. -->
+          @if (status() === 'paused') {
+            <button type="button" class="run-button" (click)="leave()">
+              <app-icon name="stop" />
+              {{ t().run.stop }}
+            </button>
+          }
+        </div>
+      }
+    }
+  </div>
+</main>
