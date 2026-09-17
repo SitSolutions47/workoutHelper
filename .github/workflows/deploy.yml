@@ -3,7 +3,7 @@ name: Build and Deploy Angular App
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,11 @@ jobs:
 
       - name: Build Angular app
         run: npm run build -- --base-href=/workoutHelper/
+
+      # GitHub Pages serves static files only, so a reload on /timer would 404.
+      # Serving the app from 404.html too lets the Angular router handle those URLs.
+      - name: Add SPA fallback for deep links
+        run: cp dist/workoutHelper/browser/index.html dist/workoutHelper/browser/404.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
