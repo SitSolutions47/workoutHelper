@@ -5,8 +5,15 @@
 </app-page-header>
 
 <main class="page">
+  <section class="card overview">
+    <app-workout-timeline [settings]="draft()" [label]="timelineLabel()" />
+  </section>
+
   <section class="card" aria-labelledby="setup-rounds-heading">
-    <h2 id="setup-rounds-heading" class="section-heading">{{ t().timer.roundsSection }}</h2>
+    <h2 id="setup-rounds-heading" class="section-heading card-heading">
+      <app-icon name="repeat" />
+      {{ t().timer.roundsSection }}
+    </h2>
     <app-stepper
       [formField]="settingsForm.rounds"
       [label]="t().timer.rounds"
@@ -36,31 +43,93 @@
     />
   </section>
 
-  <section class="card" aria-labelledby="setup-callouts-heading">
-    <h2 id="setup-callouts-heading" class="section-heading">{{ t().timer.calloutsSection }}</h2>
-    <p class="hint">{{ t().timer.calloutsHint }}</p>
-    <app-stepper
-      [formField]="settingsForm.minGapSeconds"
-      [label]="t().timer.minGap"
-      [step]="limits.gapSeconds.step"
-      [format]="t().units.secondsShort"
-      [valueText]="t().units.seconds"
+  <section class="card" aria-labelledby="setup-structure-heading">
+    <h2 id="setup-structure-heading" class="section-heading card-heading">
+      <app-icon name="timelapse" />
+      {{ t().timer.structureSection }}
+    </h2>
+    <app-select-field
+      [formField]="settingsForm.intervalSeconds"
+      [label]="t().timer.interval"
+      [options]="intervalOptions()"
+      describedBy="setup-interval-hint"
     />
+    @if (intervalInvalid()) {
+      <p class="error-text" role="alert">{{ t().timer.intervalFit }}</p>
+    }
+    <p id="setup-interval-hint" class="hint">{{ t().timer.intervalHint }}</p>
     <app-stepper
-      [formField]="settingsForm.maxGapSeconds"
-      [label]="t().timer.maxGap"
-      [step]="limits.gapSeconds.step"
-      [format]="t().units.secondsShort"
-      [valueText]="t().units.seconds"
+      [formField]="settingsForm.countdownSeconds"
+      [label]="t().timer.countdown"
+      [step]="limits.countdownSeconds.step"
+      [format]="t().timer.countdownValue"
+      [valueText]="t().timer.countdownText"
     />
+    <p class="hint">{{ t().timer.countdownHint }}</p>
   </section>
 
-  <section class="card" aria-labelledby="setup-sounds-heading">
-    <h2 id="setup-sounds-heading" class="section-heading">{{ t().timer.soundsSection }}</h2>
-    <app-sound-picker [formField]="settingsForm.soundIds" />
-    @if (settingsForm.soundIds().invalid()) {
-      <p class="error-text" role="alert">{{ t().timer.noSounds }}</p>
+  <section class="card" aria-labelledby="setup-callouts-heading">
+    <h2 id="setup-callouts-heading" class="section-heading card-heading">
+      <app-icon name="campaign" />
+      {{ t().timer.calloutsSection }}
+    </h2>
+    <label class="toggle-row">
+      <span>{{ t().timer.calloutsToggle }}</span>
+      <input
+        type="checkbox"
+        role="switch"
+        class="switch"
+        [formField]="settingsForm.calloutsEnabled"
+      />
+    </label>
+    @if (draft().calloutsEnabled) {
+      <p class="hint">{{ t().timer.calloutsHint }}</p>
+      <app-stepper
+        [formField]="settingsForm.minGapSeconds"
+        [label]="t().timer.minGap"
+        [step]="limits.gapSeconds.step"
+        [format]="t().units.secondsShort"
+        [valueText]="t().units.seconds"
+      />
+      <app-stepper
+        [formField]="settingsForm.maxGapSeconds"
+        [label]="t().timer.maxGap"
+        [step]="limits.gapSeconds.step"
+        [format]="t().units.secondsShort"
+        [valueText]="t().units.seconds"
+      />
+    } @else {
+      <p class="hint">{{ t().timer.calloutsOffHint }}</p>
     }
+  </section>
+
+  @if (draft().calloutsEnabled) {
+    <section class="card" aria-labelledby="setup-sounds-heading">
+      <h2 id="setup-sounds-heading" class="section-heading card-heading">
+        <app-icon name="library-music" />
+        {{ t().timer.soundsSection }}
+      </h2>
+      <app-sound-picker [formField]="settingsForm.soundIds" />
+      @if (settingsForm.soundIds().invalid()) {
+        <p class="error-text" role="alert">{{ t().timer.noSounds }}</p>
+      }
+    </section>
+  }
+
+  <section class="card" aria-labelledby="setup-signals-heading">
+    <h2 id="setup-signals-heading" class="section-heading card-heading">
+      <app-icon name="notifications" />
+      {{ t().timer.signalsSection }}
+    </h2>
+    <app-signal-select event="roundStart" [formField]="settingsForm.signals.roundStart" />
+    @if (draft().intervalSeconds > 0) {
+      <app-signal-select event="interval" [formField]="settingsForm.signals.interval" />
+    }
+    @if (draft().countdownSeconds > 0) {
+      <app-signal-select event="countdown" [formField]="settingsForm.signals.countdown" />
+    }
+    <app-signal-select event="roundEnd" [formField]="settingsForm.signals.roundEnd" />
+    <app-signal-select event="finish" [formField]="settingsForm.signals.finish" />
   </section>
 
   <div class="action-bar">
@@ -84,4 +153,4 @@
   </div>
 </main>
 
-<app-save-favorite-dialog (saved)="saveFavorite($event)" />
+<app-favorite-dialog (saved)="saveFavorite($event)" />

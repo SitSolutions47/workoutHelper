@@ -50,7 +50,14 @@ function tone(
   de: string,
   en: string,
 ): ToneSound {
-  return { id: `${category}.${name}`, kind: 'tone', category, name, tone: toneName, label: { de, en } };
+  return {
+    id: `${category}.${name}`,
+    kind: 'tone',
+    category,
+    name,
+    tone: toneName,
+    label: { de, en },
+  };
 }
 
 const NUMBERS = Array.from({ length: 30 }, (_, i) => {
@@ -99,12 +106,31 @@ export const CALLOUT_SOUNDS: readonly SoundDefinition[] = CALLOUT_SOUND_GROUPS.f
   (group) => group.sounds,
 );
 
-export const ROUND_START_SOUND = tone('bells', 'round-start', 'bell', 'Rundenstart', 'Round start');
-export const ROUND_END_SOUND = tone('bells', 'round-end', 'triple-bell', 'Rundenende', 'Round end');
+export const ROUND_START_SOUND = tone('bells', 'round-start', 'bell', 'Glocke', 'Bell');
+export const ROUND_END_SOUND = tone(
+  'bells',
+  'round-end',
+  'triple-bell',
+  'Dreifache Glocke',
+  'Triple bell',
+);
+
+/** Sounds that can mark timer events such as a round start or an interval switch. */
+export const SIGNAL_SOUNDS: readonly ToneSound[] = [ROUND_START_SOUND, ROUND_END_SOUND, ...SIGNALS];
+
+/** Signal choice that plays nothing. */
+export const NO_SOUND = 'none';
+/** Countdown choice that speaks the remaining seconds, using the number callouts. */
+export const SPOKEN_COUNTDOWN = 'spoken';
 
 export const SOUNDS_BY_ID: ReadonlyMap<string, SoundDefinition> = new Map(
   [...CALLOUT_SOUNDS, ROUND_START_SOUND, ROUND_END_SOUND].map((sound) => [sound.id, sound]),
 );
+
+/** The sound id a countdown choice plays with `secondsLeft` remaining. */
+export function countdownSoundId(choice: string, secondsLeft: number): string {
+  return choice === SPOKEN_COUNTDOWN ? `numbers.${secondsLeft}` : choice;
+}
 
 /** Drops unknown and duplicate ids and orders the rest like the catalog. */
 export function sortCalloutIds(ids: Iterable<string>): string[] {

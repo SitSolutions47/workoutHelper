@@ -41,6 +41,25 @@ describe('Home', () => {
     expect(titles(fixture.nativeElement)).toEqual(['Sparring', '5 × 3:00']);
   });
 
+  it('shows favorites under their group, ungrouped ones last', async () => {
+    const group = presets.addGroup('Boxen');
+    presets.addFavorite('Technik', settings(4));
+    presets.addFavorite('Sparring', settings(12), {
+      description: 'Harte Runden',
+      groupId: group.id,
+    });
+    const fixture = TestBed.createComponent(Home);
+    await fixture.whenStable();
+
+    const element: HTMLElement = fixture.nativeElement;
+    const groupTitles = [...element.querySelectorAll('.group-title')].map((node) =>
+      node.textContent?.trim(),
+    );
+    expect(groupTitles).toEqual(['Boxen', 'Ohne Gruppe']);
+    expect(titles(element)).toEqual(['Sparring', 'Technik']);
+    expect(element.querySelector('.item-description')?.textContent?.trim()).toBe('Harte Runden');
+  });
+
   it('leaves out recently used timers that are already a favorite', async () => {
     presets.recordUsage(settings(12));
     presets.addFavorite('Sparring', settings(12));

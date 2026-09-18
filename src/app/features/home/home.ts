@@ -3,6 +3,8 @@ import { Router, RouterLink } from '@angular/router';
 import { I18n } from '../../core/i18n/i18n';
 import { Icon } from '../../shared/icon/icon';
 import { PageHeader } from '../../shared/page-header/page-header';
+import { DESCRIPTION_FIT, TITLE_FIT, fitFontSize } from '../../shared/text-fit/fit-font-size';
+import { groupFavorites } from '../sound-timer/model/favorite';
 import {
   DEFAULT_TIMER_SETTINGS,
   TimerSettings,
@@ -23,14 +25,25 @@ export class Home {
 
   protected readonly t = inject(I18n).t;
 
-  protected readonly favorites = computed(() =>
-    this.presets.favorites().map((favorite) => ({
-      id: favorite.id,
-      title: favorite.name,
-      summary: summarizeSettings(favorite.settings, this.t()),
-      settings: favorite.settings,
-    })),
-  );
+  /** Favorites by group; groups without favorites are left out. */
+  protected readonly favoriteSections = computed(() => {
+    const sections = groupFavorites(this.presets.favorites(), this.presets.groups());
+    const hasGroups = sections.some((section) => section.group);
+    return sections.map((section) => ({
+      id: section.group?.id ?? '',
+      // Ungrouped favorites only need a heading to set them apart from groups.
+      heading: section.group?.name ?? (hasGroups ? this.t().presets.ungrouped : undefined),
+      favorites: section.favorites.map((favorite) => ({
+        id: favorite.id,
+        title: favorite.name,
+        titleSize: fitFontSize(favorite.name, TITLE_FIT),
+        description: favorite.description,
+        descriptionSize: fitFontSize(favorite.description, DESCRIPTION_FIT),
+        summary: summarizeSettings(favorite.settings, this.t()),
+        settings: favorite.settings,
+      })),
+    }));
+  });
 
   /** Recently used configurations, without the ones already listed as a favorite. */
   protected readonly recent = computed(() => {
@@ -47,7 +60,7 @@ export class Home {
   });
 
   protected readonly isEmpty = computed(
-    () => this.favorites().length === 0 && this.recent().length === 0,
+    () => this.favoriteSections().length === 0 && this.recent().length === 0,
   );
 
   /** Opens the setup screen with this configuration, so it can be reviewed before starting. */

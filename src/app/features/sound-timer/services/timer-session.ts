@@ -2,7 +2,7 @@ import { Service, computed, inject, signal } from '@angular/core';
 import { SoundPlayer } from '../../../core/audio/sound-player';
 import { I18n } from '../../../core/i18n/i18n';
 import { ScreenWakeLock } from '../../../core/wake-lock/screen-wake-lock';
-import { TimerCue, TimerPlan, buildTimerPlan, phaseAt } from '../model/timer-plan';
+import { TimerCue, TimerPlan, buildTimerPlan, intervalAt, phaseAt } from '../model/timer-plan';
 import { TimerSettings } from '../model/timer-settings';
 import { SOUNDS_BY_ID, toPlayableSound } from '../sounds/sound-catalog';
 
@@ -42,6 +42,21 @@ export class TimerSession {
     return phase ? (this._elapsed() - phase.start) / (phase.end - phase.start) : 1;
   });
   readonly totalRemaining = computed(() => (this._plan()?.duration ?? 0) - this._elapsed());
+  /** Position within the round's intervals, while a round with intervals is running. */
+  readonly interval = computed(() => {
+    const plan = this._plan();
+    const phase = this.phase();
+    return plan && phase ? intervalAt(plan, phase, this._elapsed()) : undefined;
+  });
+  /** Whole seconds left while the end of the current phase is being counted down. */
+  readonly countdown = computed(() => {
+    const countdownSeconds = this._plan()?.countdownSeconds ?? 0;
+    // Rounded up like the clock, so the value changes exactly when a countdown cue plays.
+    const secondsLeft = Math.ceil(this.phaseRemaining() - 0.001);
+    return this.phase() && secondsLeft >= 1 && secondsLeft <= countdownSeconds
+      ? secondsLeft
+      : undefined;
+  });
 
   private settings: TimerSettings | undefined;
   private elapsedBeforeResume = 0;

@@ -2,28 +2,84 @@
 
 <main class="page">
   <section aria-labelledby="favorites-heading">
-    <h2 #favoritesHeading id="favorites-heading" class="section-heading" tabindex="-1">
-      {{ t().presets.favorites }}
-    </h2>
-    @if (favorites().length > 0) {
-      <ul class="list" role="list">
-        @for (item of favorites(); track item.favorite.id) {
-          <li class="item card">
-            <button type="button" class="item-main" (click)="apply(item.favorite.settings)">
-              <span class="item-title">{{ item.favorite.name }}</span>
-              <span class="item-summary">{{ item.summary }}</span>
-            </button>
-            <button
-              type="button"
-              class="icon-button"
-              [attr.aria-label]="t().presets.delete(item.favorite.name)"
-              (click)="remove(item.favorite)"
-            >
-              <app-icon name="delete" />
-            </button>
-          </li>
-        }
-      </ul>
+    <div class="section-header">
+      <h2 #favoritesHeading id="favorites-heading" class="section-heading" tabindex="-1">
+        {{ t().presets.favorites }}
+      </h2>
+      <button type="button" class="text-button add-group" (click)="createGroup()">
+        <app-icon name="create-new-folder" />
+        {{ t().presets.addGroup }}
+      </button>
+    </div>
+
+    @if (sections().length > 0) {
+      @for (section of sections(); track section.group?.id ?? '') {
+        <div class="group">
+          @if (section.heading) {
+            <div class="group-header">
+              <app-icon class="group-icon" name="folder" />
+              <h3 class="group-title">{{ section.heading }}</h3>
+              @if (section.group; as group) {
+                <button
+                  type="button"
+                  class="icon-button"
+                  [attr.aria-label]="t().presets.renameGroup(group.name)"
+                  (click)="renameGroup(group)"
+                >
+                  <app-icon name="edit" />
+                </button>
+                <button
+                  type="button"
+                  class="icon-button"
+                  [attr.aria-label]="t().presets.deleteGroup(group.name)"
+                  (click)="removeGroup(group)"
+                >
+                  <app-icon name="delete" />
+                </button>
+              }
+            </div>
+          }
+          @if (section.favorites.length > 0) {
+            <ul class="list" role="list">
+              @for (item of section.favorites; track item.favorite.id) {
+                <li class="item card">
+                  <button type="button" class="item-main" (click)="apply(item.favorite.settings)">
+                    <span class="item-title" [style.font-size.rem]="item.titleSize">
+                      {{ item.favorite.name }}
+                    </span>
+                    @if (item.favorite.description) {
+                      <span class="item-description" [style.font-size.rem]="item.descriptionSize">
+                        {{ item.favorite.description }}
+                      </span>
+                    }
+                    <span class="item-summary">{{ item.summary }}</span>
+                  </button>
+                  <div class="item-actions">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [attr.aria-label]="t().presets.edit(item.favorite.name)"
+                      (click)="edit(item.favorite)"
+                    >
+                      <app-icon name="edit" />
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [attr.aria-label]="t().presets.delete(item.favorite.name)"
+                      (click)="remove(item.favorite)"
+                    >
+                      <app-icon name="delete" />
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="hint empty">{{ t().presets.emptyGroup }}</p>
+          }
+        </div>
+      }
     } @else {
       <p class="hint empty">{{ t().presets.noFavorites }}</p>
     }
@@ -48,9 +104,9 @@
   </section>
 
   <div class="toast-region" role="status">
-    @if (removed(); as current) {
+    @if (removal()) {
       <div class="toast">
-        <span class="toast-text">{{ t().presets.deleted(current.favorite.name) }}</span>
+        <span class="toast-text">{{ removalMessage() }}</span>
         <button #undoButton type="button" class="text-button toast-action" (click)="undo()">
           {{ t().common.undo }}
         </button>
@@ -66,3 +122,6 @@
     }
   </div>
 </main>
+
+<app-favorite-dialog (saved)="saveFavorite($event)" />
+<app-group-dialog (saved)="saveGroup($event)" />

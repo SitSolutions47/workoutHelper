@@ -58,6 +58,74 @@ describe('TimerPresets', () => {
     expect(presets.favorites().map((favorite) => favorite.name)).toEqual(['Technik', 'Sparring']);
   });
 
+  it('stores a favorite with its description and group', () => {
+    const group = presets.addGroup('Boxen');
+    const favorite = presets.addFavorite('Sparring', settings(12), {
+      description: 'Harte Runden',
+      groupId: group.id,
+    });
+
+    expect(presets.favorites()[0]).toEqual(favorite);
+    expect(favorite).toMatchObject({ description: 'Harte Runden', groupId: group.id });
+  });
+
+  it('updates a favorite without touching its settings', () => {
+    const favorite = presets.addFavorite('Sparring', settings(12));
+    presets.updateFavorite(favorite.id, { name: 'Technik', description: 'Locker' });
+
+    expect(presets.favorites()[0]).toMatchObject({
+      name: 'Technik',
+      description: 'Locker',
+      settings: settings(12),
+    });
+  });
+
+  it('creates a new group only when the dialog asks for one', () => {
+    const existing = presets.addGroup('Boxen');
+
+    expect(presets.resolveGroup({ kind: 'none' })).toBeUndefined();
+    expect(presets.resolveGroup({ kind: 'existing', id: existing.id })).toBe(existing.id);
+    const created = presets.resolveGroup({ kind: 'new', name: 'Kraft' });
+    expect(presets.groups().map((group) => group.name)).toEqual(['Boxen', 'Kraft']);
+    expect(presets.groups()[1].id).toBe(created);
+  });
+
+  it('keeps the favorites of a deleted group and regroups them on undo', () => {
+    const boxing = presets.addGroup('Boxen');
+    const strength = presets.addGroup('Kraft');
+    const sparring = presets.addFavorite('Sparring', settings(12), {
+      description: '',
+      groupId: boxing.id,
+    });
+    const squats = presets.addFavorite('Kniebeugen', settings(5), {
+      description: '',
+      groupId: strength.id,
+    });
+
+    const removed = presets.removeGroup(boxing.id)!;
+    expect(presets.groups()).toEqual([strength]);
+    expect(presets.favorites().find((f) => f.id === sparring.id)?.groupId).toBeUndefined();
+    expect(presets.favorites().find((f) => f.id === squats.id)?.groupId).toBe(strength.id);
+
+    presets.restoreGroup(removed);
+    expect(presets.groups()).toEqual([boxing, strength]);
+    expect(presets.favorites().find((f) => f.id === sparring.id)?.groupId).toBe(boxing.id);
+  });
+
+  it('reads favorites saved before descriptions and groups existed', () => {
+    localStorage.setItem(
+      'workout-helper.sound-timer.favorites.v1',
+      JSON.stringify([{ id: 'a', name: 'Sparring', settings: DEFAULT_TIMER_SETTINGS }]),
+    );
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    const restored = TestBed.inject(TimerPresets);
+
+    expect(restored.favorites()[0]).toMatchObject({ name: 'Sparring', description: '' });
+    expect(restored.favorites()[0].groupId).toBeUndefined();
+  });
+
   it('reports -1 when removing an unknown favorite', () => {
     expect(presets.removeFavorite('missing')).toBe(-1);
   });
@@ -74,6 +142,7 @@ describe('TimerPresets', () => {
     presets.load(settings(9));
     presets.recordUsage(settings(9));
     presets.addFavorite('Pratzen', settings(6));
+    presets.addGroup('Boxen');
     // Persisting runs in effects, which only flush on a tick.
     TestBed.tick();
 
@@ -84,6 +153,7 @@ describe('TimerPresets', () => {
     expect(restored.draft().rounds).toBe(9);
     expect(restored.history()).toHaveLength(1);
     expect(restored.favorites().map((favorite) => favorite.name)).toEqual(['Pratzen']);
+    expect(restored.groups().map((group) => group.name)).toEqual(['Boxen']);
   });
 
   it('ignores corrupted stored data', () => {

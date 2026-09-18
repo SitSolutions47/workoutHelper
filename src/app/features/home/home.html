@@ -9,23 +9,40 @@
     <p class="hint">{{ t().home.empty }}</p>
   }
 
-  @if (favorites().length > 0) {
+  @if (favoriteSections().length > 0) {
     <section aria-labelledby="favorites-heading">
       <h2 id="favorites-heading" class="section-heading">{{ t().presets.favorites }}</h2>
-      <ul class="list" role="list">
-        @for (item of favorites(); track item.id) {
-          <li>
-            <button type="button" class="item card" (click)="open(item.settings)">
-              <span class="item-icon"><app-icon name="star" /></span>
-              <span class="item-text">
-                <span class="item-title">{{ item.title }}</span>
-                <span class="item-summary">{{ item.summary }}</span>
-              </span>
-              <app-icon name="chevron-right" />
-            </button>
-          </li>
-        }
-      </ul>
+      @for (section of favoriteSections(); track section.id) {
+        <div class="group">
+          @if (section.heading) {
+            <h3 class="group-title">
+              <app-icon name="folder" />
+              {{ section.heading }}
+            </h3>
+          }
+          <ul class="list" role="list">
+            @for (item of section.favorites; track item.id) {
+              <li>
+                <button type="button" class="item card" (click)="open(item.settings)">
+                  <span class="item-icon"><app-icon name="star" /></span>
+                  <span class="item-text">
+                    <span class="item-title" [style.font-size.rem]="item.titleSize">
+                      {{ item.title }}
+                    </span>
+                    @if (item.description) {
+                      <span class="item-description" [style.font-size.rem]="item.descriptionSize">
+                        {{ item.description }}
+                      </span>
+                    }
+                    <span class="item-summary">{{ item.summary }}</span>
+                  </span>
+                  <app-icon name="chevron-right" />
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </section>
   }
 

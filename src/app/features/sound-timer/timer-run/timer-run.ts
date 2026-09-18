@@ -57,9 +57,52 @@ export class TimerRun {
     if (!phase) {
       return '';
     }
-    return phase.kind === 'work'
-      ? t.roundOf(phase.round, rounds)
-      : t.nextRound(phase.kind === 'rest' ? phase.round + 1 : 1, rounds);
+    if (phase.kind !== 'work') {
+      return t.nextRound(phase.kind === 'rest' ? phase.round + 1 : 1, rounds);
+    }
+    const interval = this.session.interval();
+    const round = t.roundOf(phase.round, rounds);
+    return interval ? `${round} · ${t.intervalOf(interval.index, interval.count)}` : round;
+  });
+
+  /** Time to the next interval switch; not announced, like the clock. */
+  protected readonly nextSwitch = computed(() => {
+    const interval = this.session.interval();
+    return interval && interval.index < interval.count && this.status() !== 'finished'
+      ? this.t().run.nextSwitch(formatClock(Math.ceil(interval.remaining - 0.001)))
+      : '';
+  });
+
+  protected readonly countdown = this.session.countdown;
+
+  /** Changes on every interval switch after the first, to replay the switch flash. */
+  protected readonly switchFlash = computed(() => {
+    const interval = this.session.interval();
+    return interval && interval.index > 1 ? [interval.index] : [];
+  });
+
+  /** Positions of interval switches on the progress bar, in percent. */
+  protected readonly intervalMarks = computed(() => {
+    const interval = this.session.interval();
+    return interval
+      ? Array.from({ length: interval.count - 1 }, (_, i) => ((i + 1) / interval.count) * 100)
+      : [];
+  });
+
+  protected readonly roundDots = computed(() => {
+    const rounds = this.session.plan()?.rounds ?? 0;
+    const phase = this.session.phase();
+    const finished = this.status() === 'finished';
+    return Array.from({ length: rounds }, (_, i) => {
+      const round = i + 1;
+      if (
+        finished ||
+        (phase && (round < phase.round || (round === phase.round && phase.kind === 'rest')))
+      ) {
+        return 'done';
+      }
+      return phase?.kind === 'work' && round === phase.round ? 'current' : 'todo';
+    });
   });
 
   /** Spoken on phase changes only; the ticking clock itself is not announced. */

@@ -5,18 +5,38 @@ import { formatClock } from '../../../core/format/format-clock';
 import { I18n } from '../../../core/i18n/i18n';
 import { Icon } from '../../../shared/icon/icon';
 import { PageHeader } from '../../../shared/page-header/page-header';
+import { SelectField, SelectOption } from '../../../shared/select-field/select-field';
 import { Stepper } from '../../../shared/stepper/stepper';
-import { TIMER_LIMITS, timerSettingsSchema, workoutDuration } from '../model/timer-settings';
-import { SaveFavoriteDialog } from '../save-favorite-dialog/save-favorite-dialog';
+import { FavoriteDialog, FavoriteDialogResult } from '../favorite-dialog/favorite-dialog';
+import {
+  TIMER_LIMITS,
+  intervalOptions,
+  timerSettingsSchema,
+  workoutDuration,
+} from '../model/timer-settings';
+import { settingsTitle, summarizeSettings } from '../model/timer-summary';
 import { TimerPresets } from '../services/timer-presets';
 import { TimerSession } from '../services/timer-session';
+import { SignalSelect } from '../signal-select/signal-select';
 import { SoundPicker } from '../sound-picker/sound-picker';
+import { WorkoutTimeline } from '../workout-timeline/workout-timeline';
 
 const STATUS_MESSAGE_MS = 4000;
 
 @Component({
   selector: 'app-timer-setup',
-  imports: [FormField, RouterLink, Icon, PageHeader, Stepper, SoundPicker, SaveFavoriteDialog],
+  imports: [
+    FormField,
+    RouterLink,
+    Icon,
+    PageHeader,
+    SelectField,
+    Stepper,
+    SoundPicker,
+    SignalSelect,
+    WorkoutTimeline,
+    FavoriteDialog,
+  ],
   templateUrl: './timer-setup.html',
   styleUrl: './timer-setup.scss',
 })
@@ -28,13 +48,38 @@ export class TimerSetup {
   protected readonly t = inject(I18n).t;
   protected readonly limits = TIMER_LIMITS;
   protected readonly formatClock = formatClock;
+  protected readonly draft = this.presets.draft;
   protected readonly settingsForm = form(this.presets.draft, timerSettingsSchema);
-  protected readonly totalDuration = computed(() =>
-    formatClock(workoutDuration(this.presets.draft())),
+  protected readonly totalDuration = computed(() => formatClock(workoutDuration(this.draft())));
+  protected readonly timelineLabel = computed(() =>
+    this.t().timer.timeline(summarizeSettings(this.draft(), this.t()), this.totalDuration()),
   );
   protected readonly statusMessage = signal('');
 
-  private readonly saveDialog = viewChild.required(SaveFavoriteDialog);
+  /** Every interval that splits the round evenly; an unfitting current value stays visible. */
+  protected readonly intervalOptions = computed<SelectOption<number>[]>(() => {
+    const t = this.t().timer;
+    const { workSeconds, intervalSeconds } = this.draft();
+    const options: SelectOption<number>[] = [
+      { value: 0, label: t.off },
+      ...intervalOptions(workSeconds).map((seconds) => ({
+        value: seconds,
+        label: t.intervalOption(formatClock(seconds), workSeconds / seconds),
+      })),
+    ];
+    if (!options.some((option) => option.value === intervalSeconds)) {
+      options.push({
+        value: intervalSeconds,
+        label: t.intervalUnfit(formatClock(intervalSeconds)),
+      });
+    }
+    return options;
+  });
+  protected readonly intervalInvalid = computed(() =>
+    this.settingsForm.intervalSeconds().invalid(),
+  );
+
+  private readonly favoriteDialog = viewChild.required(FavoriteDialog);
   private statusTimeout: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
@@ -45,7 +90,7 @@ export class TimerSetup {
     if (this.settingsForm().invalid()) {
       return;
     }
-    const settings = this.presets.draft();
+    const settings = this.draft();
     this.presets.recordUsage(settings);
     // Must run inside the tap handler so the browser allows audio playback.
     void this.session.start(settings);
@@ -53,15 +98,18 @@ export class TimerSetup {
   }
 
   protected openSaveDialog(): void {
-    const settings = this.presets.draft();
-    this.saveDialog().open(
-      this.t().presets.defaultName(settings.rounds, formatClock(settings.workSeconds)),
+    this.favoriteDialog().open(
+      { name: settingsTitle(this.draft(), this.t()), description: '' },
+      'create',
     );
   }
 
-  protected saveFavorite(name: string): void {
-    this.presets.addFavorite(name, this.presets.draft());
-    this.statusMessage.set(this.t().timer.favoriteSaved(name));
+  protected saveFavorite(result: FavoriteDialogResult): void {
+    this.presets.addFavorite(result.name, this.draft(), {
+      description: result.description,
+      groupId: this.presets.resolveGroup(result.group),
+    });
+    this.statusMessage.set(this.t().timer.favoriteSaved(result.name));
     clearTimeout(this.statusTimeout);
     this.statusTimeout = setTimeout(() => this.statusMessage.set(''), STATUS_MESSAGE_MS);
   }

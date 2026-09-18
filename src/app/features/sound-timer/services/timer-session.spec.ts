@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PlayableSound, SoundPlayer } from '../../../core/audio/sound-player';
 import { ScreenWakeLock } from '../../../core/wake-lock/screen-wake-lock';
-import { TimerSettings } from '../model/timer-settings';
+import { DEFAULT_SIGNALS, TimerSettings } from '../model/timer-settings';
 import { TimerSession } from './timer-session';
 
 /** One round, callouts every 2s, so every cue time is predictable. */
@@ -10,9 +10,13 @@ const SETTINGS: TimerSettings = {
   rounds: 1,
   workSeconds: 10,
   breakSeconds: 0,
+  intervalSeconds: 0,
+  countdownSeconds: 0,
+  calloutsEnabled: true,
   minGapSeconds: 2,
   maxGapSeconds: 2,
   soundIds: ['numbers.1'],
+  signals: DEFAULT_SIGNALS,
 };
 
 const TICK_MS = 50;
@@ -159,6 +163,29 @@ describe('TimerSession', () => {
     const playedBefore = player.played.length;
     advance(10);
     expect(player.played).toHaveLength(playedBefore);
+  });
+
+  it('reports the interval position and counts down the end of the phase', async () => {
+    player.played.length = 0;
+    await session.start({
+      ...SETTINGS,
+      workSeconds: 20,
+      intervalSeconds: 5,
+      countdownSeconds: 3,
+      calloutsEnabled: false,
+    });
+
+    advance(6);
+    expect(session.interval()).toEqual({ index: 2, count: 4, remaining: expect.closeTo(4, 1) });
+    expect(session.countdown()).toBeUndefined();
+    expect(player.played).toEqual(['bells/round-start', 'signals/double-beep']);
+
+    advance(11.5);
+    expect(session.countdown()).toBe(3);
+    expect(player.played.at(-1)).toBe('signals/beep');
+
+    advance(1);
+    expect(session.countdown()).toBe(2);
   });
 
   it('shows the latest callout for the run screen and clears it at the round end', () => {

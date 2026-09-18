@@ -5,13 +5,33 @@
   </header>
   <p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
 
+  <!-- Round progress, also stated in the detail text above. -->
+  <div class="round-dots" aria-hidden="true">
+    @for (dot of roundDots(); track $index) {
+      <span class="round-dot round-dot--{{ dot }}"></span>
+    }
+  </div>
+
   <div class="clock-area">
-    <div class="clock" role="timer">{{ clock() }}</div>
+    <div class="clock" role="timer" [class.clock--countdown]="countdown() !== undefined">
+      <!-- Re-created every second, so the countdown pulse restarts with each number. -->
+      @for (value of [clock()]; track value) {
+        <span class="clock-value">{{ value }}</span>
+      }
+    </div>
     <div class="progress" aria-hidden="true">
       <div class="progress-fill" [style.transform]="progressTransform()"></div>
+      @for (mark of intervalMarks(); track $index) {
+        <span class="progress-mark" [style.left.%]="mark"></span>
+      }
     </div>
+    <p class="next-switch">{{ nextSwitch() }}</p>
     <p class="total">{{ t().run.totalRemaining(totalRemaining()) }}</p>
   </div>
+
+  @for (index of switchFlash(); track index) {
+    <div class="switch-flash" aria-hidden="true"></div>
+  }
 
   <!-- Visual echo of the audio callout; hidden from screen readers, who already hear it. -->
   <div class="callout" aria-hidden="true">
@@ -34,14 +54,23 @@
         <p class="loading">{{ t().run.loading }}</p>
       }
       @case ('finished') {
-        <button #againButton type="button" class="run-button run-button--primary" (click)="session.restart()">
+        <button
+          #againButton
+          type="button"
+          class="run-button run-button--primary"
+          (click)="session.restart()"
+        >
           <app-icon name="replay" />
           {{ t().run.again }}
         </button>
         <button type="button" class="run-button" (click)="leave()">{{ t().run.adjust }}</button>
       }
       @default {
-        <button type="button" class="run-button run-button--primary" (click)="session.togglePause()">
+        <button
+          type="button"
+          class="run-button run-button--primary"
+          (click)="session.togglePause()"
+        >
           @if (status() === 'paused') {
             <app-icon name="play" />
             {{ t().run.resume }}

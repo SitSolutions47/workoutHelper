@@ -25,6 +25,7 @@
 }
 
 .layout {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -59,6 +60,32 @@
   gap: 0.75rem;
 }
 
+.round-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.round-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 2px solid var(--phase-fg);
+  border-radius: 50%;
+  transition:
+    background-color 300ms ease,
+    transform 300ms ease;
+}
+
+.round-dot--done {
+  background: var(--phase-fg);
+}
+
+.round-dot--current {
+  background: var(--phase-fg);
+  transform: scale(1.4);
+}
+
 .clock {
   font-size: clamp(5rem, 28vw, 9rem);
   font-weight: 800;
@@ -66,9 +93,24 @@
   line-height: 1;
 }
 
+.clock-value {
+  display: inline-block;
+}
+
+.clock--countdown .clock-value {
+  animation: countdown-pulse 1s ease-out;
+}
+
+@keyframes countdown-pulse {
+  from {
+    transform: scale(1.18);
+  }
+}
+
 .progress {
+  position: relative;
   width: 100%;
-  height: 0.5rem;
+  height: 0.625rem;
   overflow: hidden;
   border-radius: 999px;
   background: color-mix(in srgb, var(--phase-fg) 25%, transparent);
@@ -80,8 +122,40 @@
   transform-origin: left;
 }
 
+// Gaps in the bar where one interval ends and the next begins.
+.progress-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--phase-bg);
+}
+
+.next-switch {
+  min-height: 1.45em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .total {
   font-variant-numeric: tabular-nums;
+}
+
+.switch-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: var(--phase-fg);
+  opacity: 0;
+  pointer-events: none;
+  animation: switch-flash 600ms ease-out;
+}
+
+@keyframes switch-flash {
+  from {
+    opacity: 0.35;
+  }
 }
 
 .callout {
